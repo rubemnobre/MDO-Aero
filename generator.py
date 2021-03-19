@@ -10,15 +10,15 @@ c_min_w = 0.2
 b_max_w = 3.0
 c_max_w = 0.6
 
-b_min_h = 0.2
+b_min_h = 0.1
 c_min_h = 0.1
 b_max_h = 1.2
-c_max_h = 0.4
+c_max_h = 0.3
 
 b_min_v = 0.1
 c_min_v = 0.1
 b_max_v = 0.5
-c_max_v = 0.5
+c_max_v = 0.3
 
 iw_max = 8
 ih_max = -8
@@ -80,12 +80,12 @@ def variar(aeronave, sigma):
     ctv = geometria_ev[1][1]
     bv  = geometria_ev[1][0]
     
-    b  = trunc_gauss(b,  sigma, br, b_max_w/2)
-    bt = trunc_gauss(bt, sigma, 0.1, b_max_w/2 - br)
+    br = trunc_gauss(br, sigma, b_min_w/2, b_max_w/2 - 0.1)
+    bt = trunc_gauss(bt, sigma, 0.1, b_max_w/2 - bt)
     cr = trunc_gauss(cr, sigma, ct, c_max_w)
     o1 = trunc_gauss(o1, sigma, 0, offset_max)
     ct = trunc_gauss(ct, sigma, c_min_w, cr)
-    br = b - bt
+    b = bt + br
 
     ch = trunc_gauss(ch, sigma, c_min_h, c_max_h)
     bh = trunc_gauss(bh, sigma, b_min_h/2, b_max_h/2)
@@ -111,9 +111,12 @@ def nota(aeronave):
         return -1000
     if aeronave.CM0 < 0:
         res -= 100
-    res += -abs(aeronave.atrim - 5)
-    res += aeronave.CL0*0.2/aeronave.CD0
-    res += aeronave.Sw
+    cl = 2*16*9.81/(aeronave.Sw * 1.162 * 16**2)
+    alpha = (cl - aeronave.CL0)/aeronave.CLa
+    res += -alpha*0.1
+    res += -abs(aeronave.atrim - alpha)
+    res += aeronave.CL0*0.3/aeronave.CD0
+    res += aeronave.Sw*3
     return res
 
 def reproducao(gerados, sigma):
@@ -129,17 +132,17 @@ def reproducao(gerados, sigma):
 
 def trunc_gauss(mu, sigma, bottom, top):
     a = random.gauss(mu,sigma)
-    if(top < bottom or not(bottom <= mu <= top)):
-        raise Exception("fora dos limites, val = %.2f bot = %.2f top = %.2f" % (mu, bottom, top))
-    while not(bottom <= a <= top):
-        a = random.gauss(mu,sigma)
+    if a >= top:
+        return top
+    if a <= bottom:
+        return bottom
     return a
 
 candidatos = gerar_inicial()
 ant = 0
-n = 100
+n = 10
 for j in range(n):
-    candidatos = reproducao(candidatos, 0.0001*(n - j))
+    candidatos = reproducao(candidatos, 0.01*(n - j))
     melhor = max(candidatos, key=nota)
     print("geração %d: %.3f" % (j, nota(melhor)))
     print("CM0 = %.4f CMa = %.4f CL/CD = %.4f atrim = %.3f Sw = %.3f" % (melhor.CM0, melhor.CMa, melhor.CL0/melhor.CD0, melhor.atrim, melhor.Sw))

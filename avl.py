@@ -41,8 +41,6 @@ def resultados_avl(aeronave): # CM0, CL0, CLa, CMa, Xnp
     process.terminate()
     output = out.decode('utf-8')
     match = re.search(r'(Cmtot =..........)', output)
-    if match == None:
-        print(output)
     CM0 = float(output[match.start() + 7:match.start() + 17])
     match = re.search(r'(CLtot =..........)', output)
     CL0 = float(output[match.start() + 7:match.start() + 17])

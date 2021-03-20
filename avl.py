@@ -54,7 +54,8 @@ def resultados_avl(aeronave, alpha): # CM0, CL0, CLa, CMa, Xnp
     process.terminate()
     output = out.decode('utf-8')
     results = dict()
-
+    if re.search('zero-camber', output):
+        print('problema perfil %s' % aeronave.perfil_asa)
     match = re.search(r'(Cmtot =..........)', output)
     results['CM'] = float(output[match.start() + 7:match.start() + 17])
 

@@ -25,6 +25,7 @@ class Monoplano:
         self.atualizar_geometria()
         self.mtow = mtow
         self.xcg, self.carga_paga, self.peso_vazio = self.estimar_cg()
+        self.xcg = 0.2*self.cw
         self.iw = iw
         self.ih = ih
         #self.atualizar_constantes()
@@ -134,21 +135,18 @@ class Monoplano:
     def avaliar(self):
         res = 0
         # Requesitos de estabilidade estática e dinâmica (sadraey tabela 6.3)
-        if self.CM0 < 0:
-            res = -1000
-        res += 1*func_erro(self.CMa * 180/pi, -0.3, -1.5)
-        res += 1*func_erro(self.res0['CMq'] * 180/pi, -5, -40)
-        res += 1*func_erro(self.res0['Cnb'] * 180/pi, 0.05, 0.4)
-        res += 1*func_erro(self.res0['Cnr'] * 180/pi, -0.1, -1)
-        res += 10*func_erro(self.ME*100, 5, 15)
+        res += 2*func_erro(self.CMa * 180/pi, -0.1, -0.8)
+        res += 2*func_erro(self.res0['CMq'] * 180/pi, -5, -40)
+        res += 2*func_erro(self.res0['Cnb'] * 180/pi, 0.05, 0.4)
+        res += 2*func_erro(self.res0['Cnr'] * 180/pi, -0.1, -1)
+        res += 10*func_erro(self.ME, 0.07, 0.15)
 
         res += func_erro(self.VH, 0.3, 0.5)
-        res += 0.3*func_erro(self.VV, 0.03, 0.05)
-        res += 2*func_erro(self.atrim, 0, 6)
-        res += 5*func_erro(self.CL_CD, 5, 20)
-        res += func_erro(self.x_decolagem, 48, 50)
-        res += -10*self.peso_vazio
-        res += 10*self.carga_paga
+        res += 0.3*func_erro(self.VV, 0.02, 0.05)
+        res += 3*func_erro(self.atrim, 0, 6)
+        res += 5*func_erro(self.CL_CD, 10, 50)
+        res += func_erro(self.x_pouso, 90, 110)
+        res += -2*self.peso_vazio
         self.nota = res
 
 def func_erro(valor, bot, top):

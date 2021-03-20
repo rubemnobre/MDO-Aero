@@ -2,8 +2,8 @@ import random
 from models import Monoplano
 from avl import criar_arquivo
 
-n_candidatos = 100
-n_selecionados = 50
+n_candidatos = 50
+n_selecionados = 25
 
 b_min_w = 1.5
 c_min_w = 0.2
@@ -23,17 +23,17 @@ c_max_v = 0.3
 iw_max = 8
 ih_max = -8
 
-mtow_min = 12
+mtow_min = 16
 mtow_max = 16
 
-offset_max = 0.3
+offset_max = 0.4
 n_sect = 3
 dist_nariz = 0.25
 soma_dims = 3.2 - dist_nariz
 
-perfis_asa = ['s1223'] #, 's1223']
-perfis_eh = ['e168'] #, 'naca0015']
-perfis_ev = ['naca0009'] #, 'e169']
+perfis_asa = ['FX 74-Cl5-140 MOD (smoothed)', 'S1223 RTL', 'CH10 (smoothed)', 'DAE-21 AIRFOIL', 'WORTMANN FX 63-137 AIRFOIL']
+perfis_eh = ['e168', 'e169', 'e479', 'n0012', 'naca0015']
+perfis_ev = ['e169']
 
 def gerar_inicial():
     aeronaves = []
@@ -63,10 +63,10 @@ def gerar_inicial():
         mtow = random.uniform(mtow_min, mtow_max)
 
         posicoes = { 'asa' : (0,0), 'eh' : (soma_dims - ch - b*2, 0), 'ev' : (soma_dims - crv - b*2, 0) }
-        for perfil_asa in perfis_asa:
-            for perfil_eh in perfis_eh:
-                for perfil_ev in perfis_ev:
-                    aeronaves.append(Monoplano(geometria_asa, perfil_asa, iw, geometria_eh, perfil_eh, ih, geometria_ev, perfil_ev, posicoes, mtow))
+        perfil_asa = random.choice(perfis_asa)
+        perfil_eh = random.choice(perfis_eh)
+        perfil_ev = random.choice(perfis_ev)
+        aeronaves.append(Monoplano(geometria_asa, perfil_asa, iw, geometria_eh, perfil_eh, ih, geometria_ev, perfil_ev, posicoes, mtow))
     return aeronaves
 
 def variar(aeronave, sigma):

@@ -5,6 +5,7 @@ from avl import resultados_avl
 n = 1
 MTOW_projeto = 16
 g = 9.81
+CLmax = 2.1
 
 nomes = ['arara', 'papagaio', 'pavao', 'pomba', 'avestruz', 'galinha', 'galo', 'aguia', 'gaviao', 'harpia', 'tucano', 'pinguim']
 class Monoplano:
@@ -28,7 +29,16 @@ class Monoplano:
         self.perfil_ev = perfil_ev
         self.nome = random.choice(nomes) + '-' + random.choice(nomes) + '-' + str(random.randint(1000, 9999))
         self.CM0, self.CL0, self.CD0, self.CLa, self.CMa, self.Xnp = resultados_avl(self)
+        self.res = resultados_avl(self)
+        self.CM0 = self.res['CM0']
+        self.CL0 = self.res['CL0']
+        self.CD0 = self.res['CD0']
+        self.CLa = self.res['CLa']
+        self.CMa = self.res['CMa']
+        self.Xnp = self.res['Xnp']
         self.atrim = -self.CM0/self.CMa
+        self.ME = (self.Xnp - self.xcg)/self.bw
+        self.avaliar()
     
     def atualizar_geometria(self):
         self.Sw, self.bw, self.cw, self.ARw, self.Xacw = avaliar_geometria(self.geometria_asa)
@@ -37,7 +47,7 @@ class Monoplano:
         self.lh = self.posicoes["eh"][0] - 0.25*(self.cw - self.ch)
         self.lv = self.posicoes["ev"][0] - 0.25*(self.cw - self.cv)
         self.VH = (self.lh*self.Sh)/(self.cw*self.Sw)
-        self.VV = (self.Sv*self.lv)/(self.Sw*self.bw)
+        self.VV = (self.Sv*self.lv)*2/(self.Sw*self.bw)
 
     def estimar_cg(self):
         massaHELICE2021 = 0.11174  # ajustar #
@@ -70,7 +80,7 @@ class Monoplano:
         massaEV2019 = 0.06406
         areaEV2019 = 0.10236
 
-        massaEV2021 = self.Sv * (massaEV2019 / areaEV2019)
+        massaEV2021 = 2*self.Sv * (massaEV2019 / areaEV2019)
         bracoEV2021 = 0.25 + self.Xacw + self.lv + 0.1 * self.cv
         momentoEV = g * massaEV2021 * bracoEV2021
 
@@ -96,3 +106,21 @@ class Monoplano:
         PosXCG = XCG - 0.25
         peso_vazio = MTOW_projeto - carga_paga
         return PosXCG, carga_paga, peso_vazio
+    
+    def avaliar(self):
+        res = 0
+
+        # Requesitos de estabilidade estática e dinâmica (sadraey tabela 6.3)
+
+        res += func_erro(self.VH, 0.3, 0.5)
+        res += func_erro(self.VV, 0.03, 0.05)
+        res += func_erro(self.ME, 0.05, 0.15)
+        res += func_erro(self.atrim, 0, 6)
+        res += self.CL0*0.2/self.CD0
+        res += self.Sw
+        res -= self.peso_vazio*0.5
+        self.nota = res
+
+def func_erro(valor, bot, top):
+    weight = 4/((bot-top)**2)
+    return -weight*(valor - bot)*(valor - top)

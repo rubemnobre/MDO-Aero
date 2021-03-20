@@ -105,22 +105,8 @@ def variar(aeronave, sigma):
 
     return Monoplano(geometria_asa, aeronave.perfil_asa, iw, geometria_eh, aeronave.perfil_eh, ih, geometria_ev, aeronave.perfil_ev, posicoes)
 
-def nota(aeronave):
-    res = 0
-    if aeronave.lh <= 0 or aeronave.lv <= 0:
-        return -1000
-    if aeronave.CM0 < 0:
-        res -= 100
-    cl = 2*16*9.81/(aeronave.Sw * 1.162 * 16**2)
-    alpha = (cl - aeronave.CL0)/aeronave.CLa
-    res += -alpha*0.1
-    res += -abs(aeronave.atrim - alpha)
-    res += aeronave.CL0*0.3/aeronave.CD0
-    res += aeronave.Sw*3
-    return res
-
 def reproducao(gerados, sigma):
-    pais = sorted(gerados, key=nota, reverse=True)[:n_selecionados]
+    pais = sorted(gerados, key= lambda a : a.nota, reverse=True)[:n_selecionados]
     filhos = []
     j = 0
     for pai in pais:
@@ -137,15 +123,3 @@ def trunc_gauss(mu, sigma, bottom, top):
     if a <= bottom:
         return bottom
     return a
-
-candidatos = gerar_inicial()
-ant = 0
-n = 10
-for j in range(n):
-    candidatos = reproducao(candidatos, 0.01*(n - j))
-    melhor = max(candidatos, key=nota)
-    print("geração %d: %.3f" % (j, nota(melhor)))
-    print("CM0 = %.4f CMa = %.4f CL/CD = %.4f atrim = %.3f Sw = %.3f" % (melhor.CM0, melhor.CMa, melhor.CL0/melhor.CD0, melhor.atrim, melhor.Sw))
-
-criar_arquivo(melhor)
-print("Sw = %.3f\nVH = %.3f\nVV = %.3f\nlh = %.2f\nlv = %.2f\nBw = %.2f, cw = %.2f" % (melhor.Sw, melhor.VH, melhor.VV, melhor.lh, melhor.lv, melhor.bw, melhor.cw))

@@ -2,7 +2,7 @@ import csv
 
 def avaliar_geometria(geometria):
     if len(geometria) == 0:
-        return 0, 0, 0, 0
+        return 0, 0, 0, 0, 0
     b = 2*geometria[-1][0] # Envergadura
     S = 0
     c = 0

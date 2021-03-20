@@ -47,19 +47,19 @@ def criar_arquivo(aeronave):
         arq.write("AFILE\navl/%s.dat\n" % aeronave.perfil_ev)
     arq.close()
 
-def resultados_avl(aeronave): # CM0, CL0, CLa, CMa, Xnp
+def resultados_avl(aeronave, alpha): # CM0, CL0, CLa, CMa, Xnp
     criar_arquivo(aeronave)
     process = subprocess.Popen(['avl'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    out = process.communicate(bytes('load %s\noper\na a 0\nx\nst\n\nquit\n' % (caminho_geometrias + aeronave.nome), 'utf-8'))[0]
+    out = process.communicate(bytes('load %s\noper\na a %.3f\nx\nst\n\nquit\n' % (caminho_geometrias + aeronave.nome, alpha), 'utf-8'))[0]
     process.terminate()
     output = out.decode('utf-8')
     results = dict()
 
     match = re.search(r'(Cmtot =..........)', output)
-    results['CM0'] = float(output[match.start() + 7:match.start() + 17])
+    results['CM'] = float(output[match.start() + 7:match.start() + 17])
 
     match = re.search(r'(CLtot =..........)', output)
-    results['CL0'] = float(output[match.start() + 7:match.start() + 17])
+    results['CL'] = float(output[match.start() + 7:match.start() + 17])
 
     match = re.search(r'(CLa =...........)', output)
     results['CLa'] = float(output[match.start() + 7:match.start() + 17]) * pi/180
@@ -71,14 +71,14 @@ def resultados_avl(aeronave): # CM0, CL0, CLa, CMa, Xnp
     results['CMq'] = float(output[match.start() + 7:match.start() + 17]) * pi/180
 
     match = re.search(r'(Cnb =...........)', output)
-    results['CNb'] = float(output[match.start() + 7:match.start() + 17]) * pi/180
+    results['Cnb'] = float(output[match.start() + 7:match.start() + 17]) * pi/180
 
     match = re.search(r'(Cnr =...........)', output)
-    results['CNr'] = float(output[match.start() + 7:match.start() + 17]) * pi/180
+    results['Cnr'] = float(output[match.start() + 7:match.start() + 17]) * pi/180
 
     match = re.search(r'(Xnp =...........)', output)
     results['Xnp'] = float(output[match.start() + 7:match.start() + 17])
 
     match = re.search(r'(CDtot =...........)', output)
-    results['CD0'] = float(output[match.start() + 7:match.start() + 17])
+    results['CD'] = float(output[match.start() + 7:match.start() + 17])
     return results

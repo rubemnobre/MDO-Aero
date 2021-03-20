@@ -17,10 +17,10 @@ n = 50
 for j in range(n):
     os.mkdir('./avl/configs/%s/geracao-%d' % (code, j+1))
     avl.caminho_geometrias = './avl/configs/%s/geracao-%d/' % (code,j + 1)
-    candidatos = optimizer.reproducao(candidatos, 0.001*(n - j))
+    candidatos = optimizer.reproducao(candidatos, 0.0005*(n - j))
     melhor = max(candidatos, key= lambda a : a.nota)
     print("geração %d: %.3f" % (j, melhor.nota))
-    print("CM0 = %.4f CMa = %.4f CL/CD = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% PV = %.2f" % (melhor.CM0, melhor.CMa, melhor.CL0/melhor.CD0, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.peso_vazio))
+    print("CM0 = %.4f CMa = %.4f CL/CD = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% PV = %.2f Slo = %.2f mtow = %.2f" % (melhor.CM0, melhor.CMa, melhor.CL_CD, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.peso_vazio, melhor.x_decolagem, melhor.mtow))
 
 candidatos.sort(key=lambda a : a.nota)
 os.mkdir('./avl/configs/%s/resultado' % code)

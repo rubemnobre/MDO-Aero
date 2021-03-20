@@ -23,6 +23,9 @@ c_max_v = 0.3
 iw_max = 8
 ih_max = -8
 
+mtow_min = 12
+mtow_max = 16
+
 offset_max = 0.3
 n_sect = 3
 dist_nariz = 0.25
@@ -56,12 +59,14 @@ def gerar_inicial():
 
         iw =  random.uniform(0, iw_max)
         ih =  random.uniform(ih_max, 0)
+        
+        mtow = random.uniform(mtow_min, mtow_max)
 
         posicoes = { 'asa' : (0,0), 'eh' : (soma_dims - ch - b*2, 0), 'ev' : (soma_dims - crv - b*2, 0) }
         for perfil_asa in perfis_asa:
             for perfil_eh in perfis_eh:
                 for perfil_ev in perfis_ev:
-                    aeronaves.append(Monoplano(geometria_asa, perfil_asa, iw, geometria_eh, perfil_eh, ih, geometria_ev, perfil_ev, posicoes))
+                    aeronaves.append(Monoplano(geometria_asa, perfil_asa, iw, geometria_eh, perfil_eh, ih, geometria_ev, perfil_ev, posicoes, mtow))
     return aeronaves
 
 def variar(aeronave, sigma):
@@ -97,23 +102,22 @@ def variar(aeronave, sigma):
     iw = trunc_gauss(aeronave.iw, sigma*10, 0, iw_max)
     ih = trunc_gauss(aeronave.ih, sigma, ih_max, 0)
     
+    mtow = trunc_gauss(aeronave.mtow, sigma, mtow_min, mtow_max)
+
     geometria_asa = [(0, cr, 0), (br, cr, 0), (b, ct, o1)]
     geometria_eh = [(0, ch, 0), (bh, ch, 0)]
     geometria_ev = [(0, crv, 0), (bv, ctv, crv-ctv)]
 
     posicoes = { 'asa' : (0,0), 'eh' : (soma_dims - ch - b*2, 0), 'ev' : (soma_dims - crv - b*2, 0) }
 
-    return Monoplano(geometria_asa, aeronave.perfil_asa, iw, geometria_eh, aeronave.perfil_eh, ih, geometria_ev, aeronave.perfil_ev, posicoes)
+    return Monoplano(geometria_asa, aeronave.perfil_asa, iw, geometria_eh, aeronave.perfil_eh, ih, geometria_ev, aeronave.perfil_ev, posicoes, mtow)
 
 def reproducao(gerados, sigma):
     pais = sorted(gerados, key= lambda a : a.nota, reverse=True)[:n_selecionados]
     filhos = []
-    j = 0
     for pai in pais:
         for i in range(int(len(gerados)/len(pais))):
             filhos.append(variar(pai, sigma))
-            j += 1
-        #print("%d/%d" % ( j, len(gerados) ))
     return filhos
 
 def trunc_gauss(mu, sigma, bottom, top):

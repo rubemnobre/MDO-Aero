@@ -2,8 +2,8 @@ import random
 from models import Monoplano
 from avl import criar_arquivo
 
-n_candidatos = 50
-n_selecionados = 25
+n_candidatos = 100
+n_selecionados = 50
 
 b_min_w = 1.5
 c_min_w = 0.2
@@ -12,27 +12,32 @@ c_max_w = 0.6
 
 b_min_h = 0.1
 c_min_h = 0.1
-b_max_h = 1.2
+b_max_h = 2
 c_max_h = 0.3
+ht_max = 0.6
 
 b_min_v = 0.1
 c_min_v = 0.1
 b_max_v = 0.5
 c_max_v = 0.3
+lambda_min_v = 0.4
+lambda_max_v = 0.95
 
-iw_max = 8
-ih_max = -8
+iw_max = 5
+ih_max = -5
 
 mtow_min = 16
 mtow_max = 16
 
 offset_max = 0.4
 n_sect = 3
-dist_nariz = 0.25
+dist_nariz = 0.295
 soma_dims = 3.2 - dist_nariz
 
-perfis_asa = ['FX 74-Cl5-140 MOD (smoothed)', 'S1223 RTL', 'CH10 (smoothed)', 'DAE-21 AIRFOIL', 'WORTMANN FX 63-137 AIRFOIL']
-perfis_eh = ['e168', 'e169', 'e479', 'n0012', 'naca0015']
+#perfis_asa = ['FX 74-Cl5-140 MOD (smoothed)', 'S1223 RTL', 'CH10 (smoothed)', 'DAE-21 AIRFOIL', 'WORTMANN FX 63-137 AIRFOIL']
+#perfis_eh = ['e168', 'e169', 'e479', 'n0012', 'naca0015']
+perfis_asa = ['s1223']
+perfis_eh = ['e168']
 perfis_ev = ['e169']
 
 def gerar_inicial():
@@ -51,8 +56,9 @@ def gerar_inicial():
         
         geometria_eh = [(0, ch, 0), (bh, ch, 0)]
 
-        crv = random.uniform(c_min_v, c_max_v)
-        ctv = random.uniform(c_min_v, crv)
+        crv = random.uniform(ch, c_max_v)
+        lambda_v = random.uniform(lambda_min_v, lambda_max_v)
+        ctv = lambda_v*crv
         bv = random.uniform(b_min_v, b_max_v)
         
         geometria_ev = [(0, crv, 0), (bv, ctv, crv-ctv)]
@@ -60,9 +66,11 @@ def gerar_inicial():
         iw =  random.uniform(0, iw_max)
         ih =  random.uniform(ih_max, 0)
         
+        ht = random.uniform(0, ht_max)
+
         mtow = random.uniform(mtow_min, mtow_max)
 
-        posicoes = { 'asa' : (0,0), 'eh' : (soma_dims - ch - b*2, 0), 'ev' : (soma_dims - crv - b*2, 0) }
+        posicoes = { 'asa' : (0,0), 'eh' : (soma_dims - ch - b*2, ht), 'ev' : (soma_dims - crv - b*2, ht) }
         perfil_asa = random.choice(perfis_asa)
         perfil_eh = random.choice(perfis_eh)
         perfil_ev = random.choice(perfis_ev)
@@ -96,19 +104,24 @@ def variar(aeronave, sigma):
     bh = trunc_gauss(bh, sigma, b_min_h/2, b_max_h/2)
 
     ctv = trunc_gauss(ctv, sigma, c_min_v, crv)
-    crv = trunc_gauss(crv, sigma, ctv, c_max_v)
     bv = trunc_gauss(bv, sigma, b_min_v, b_max_v)
+    lambda_v = ctv/crv
+    lambda_v = trunc_gauss(lambda_v, sigma, lambda_min_v, lambda_max_v)
+    ctv = lambda_v*crv
 
     iw = trunc_gauss(aeronave.iw, sigma*10, 0, iw_max)
     ih = trunc_gauss(aeronave.ih, sigma, ih_max, 0)
     
+    ht = aeronave.posicoes['eh'][1]
+    ht = trunc_gauss(ht, sigma, 0, ht_max)
+
     mtow = trunc_gauss(aeronave.mtow, sigma, mtow_min, mtow_max)
 
     geometria_asa = [(0, cr, 0), (br, cr, 0), (b, ct, o1)]
     geometria_eh = [(0, ch, 0), (bh, ch, 0)]
     geometria_ev = [(0, crv, 0), (bv, ctv, crv-ctv)]
 
-    posicoes = { 'asa' : (0,0), 'eh' : (soma_dims - ch - b*2, 0), 'ev' : (soma_dims - crv - b*2, 0) }
+    posicoes = { 'asa' : (0,0), 'eh' : (soma_dims - ch - b*2, ht), 'ev' : (soma_dims - crv - b*2, ht) }
 
     return Monoplano(geometria_asa, aeronave.perfil_asa, iw, geometria_eh, aeronave.perfil_eh, ih, geometria_ev, aeronave.perfil_ev, posicoes, mtow)
 

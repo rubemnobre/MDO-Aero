@@ -8,6 +8,7 @@ rho = 1.16
 g = 9.81
 CLmax = 2.3
 mu = 0.09
+v_cruzeiro = 16
 pi = 3.1415926535897932384626433832795
 
 nomes = ['arara', 'papagaio', 'pavao', 'pomba', 'avestruz', 'galinha', 'galo', 'aguia', 'gaviao', 'harpia', 'tucano', 'pinguim']
@@ -25,7 +26,7 @@ class Monoplano:
         self.atualizar_geometria()
         self.mtow = mtow
         self.xcg, self.carga_paga, self.peso_vazio = self.estimar_cg()
-        self.xcg = 0.2*self.cw
+        #self.xcg = 0.2*self.cw
         self.iw = iw
         self.ih = ih
         #self.atualizar_constantes()
@@ -39,7 +40,8 @@ class Monoplano:
         self.CLa = self.res0['CLa']
         self.CMa = self.res0['CMa']
         self.Xnp = self.res0['Xnp']
-        self.K = 1/(pi*0.85*self.ARw)
+        self.phi = ((16*0.2416/self.bw)**2)/(1 + ((16*0.2416/self.bw)**2))
+        self.K = self.phi/(pi*0.85*self.ARw)
         self.CD0 = self.res0['CD'] - self.K*self.CL0*self.CL0
         self.atrim = -self.CM0/self.CMa
         self.ME = (self.Xnp - self.xcg)/self.bw
@@ -119,7 +121,7 @@ class Monoplano:
         carga_paga = self.mtow - (massaHELICE2021 + massaMOTOR2021 + massaTANQUEVAZIO2021 + massaCAIXAELETRICO2019 + massaFUSELAGEM2019 + massaASA2021 + massaEH2021 + massaEV2021)
 
         massaCARGAPAGA = carga_paga  # ajustar #
-        bracoCARGAPAGA2019 = 0.35
+        bracoCARGAPAGA2019 = 0.25 + 0.25*self.cw
         momentoCARGAPAGA = g * massaCARGAPAGA * bracoCARGAPAGA2019
 
         SomaMomentos = momentoHELICE + momentoMOTOR + momentoTANQUEVAZIO + momentoCAIXAELETRICO + momentoFUSELAGEM + \
@@ -135,6 +137,13 @@ class Monoplano:
     def avaliar(self):
         res = 0
         # Requesitos de estabilidade estática e dinâmica (sadraey tabela 6.3)
+
+        CLtrim = self.CL0 + self.atrim*self.CLa
+        CLcruzeiro = (2*g*self.mtow)/(rho*(v_cruzeiro**2)*self.Sw)
+
+        if CLtrim > CLmax:
+            res -= 100*(CLtrim - CLmax)
+
         res += 2*func_erro(self.CMa * 180/pi, -0.1, -0.8)
         res += 2*func_erro(self.res0['CMq'] * 180/pi, -5, -40)
         res += 2*func_erro(self.res0['Cnb'] * 180/pi, 0.05, 0.4)
@@ -145,7 +154,9 @@ class Monoplano:
         res += 0.3*func_erro(self.VV, 0.02, 0.05)
         res += 3*func_erro(self.atrim, 0, 6)
         res += 5*func_erro(self.CL_CD, 10, 50)
-        res += func_erro(self.x_pouso, 90, 110)
+        res += 5*func_erro(self.x_pouso, 80, 120)
+        res += 3*func_erro(CLtrim, CLcruzeiro - 0.1, CLcruzeiro + 0.1)
+        res += 15*func_erro(self.ARw, 5, 8)
         res += -2*self.peso_vazio
         self.nota = res
 

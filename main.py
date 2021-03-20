@@ -13,7 +13,7 @@ avl.caminho_geometrias = './avl/configs/%s/geracao-%d/' % (code, 0)
 
 candidatos = optimizer.gerar_inicial()
 ant = 0
-n = 50
+n = 100
 nota_ant = -1000
 notas = []
 for j in range(n):
@@ -22,7 +22,7 @@ for j in range(n):
     candidatos = optimizer.reproducao(candidatos, 0.0005*(n - j))
     melhor = max(candidatos, key= lambda a : a.nota)
     print("geração %d: %.3f" % (j+1, melhor.nota))
-    print("CM0 = %.4f CMa = %.4f CL/CD = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% PV = %.2f pouso = %.2f perf = %s" % (melhor.CM0, melhor.CMa, melhor.CL_CD, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.peso_vazio, melhor.x_pouso, melhor.perfil_asa))
+    print("CM0 = %.4f CMa = %.4f CL/CD = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% PV = %.2f pouso = %.2f perf = %s ar = %.3f" % (melhor.CM0, melhor.CMa, melhor.CL_CD, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.peso_vazio, melhor.x_pouso, melhor.perfil_asa, melhor.ARw))
     notas.append(melhor.nota)
     if abs(melhor.nota - sum(notas)/5) < 0.5 and len(notas) == 10:
         break

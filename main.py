@@ -13,25 +13,28 @@ avl.caminho_geometrias = './avl/configs/%s/geracao-%d/' % (code, 0)
 
 candidatos = optimizer.gerar_inicial()
 ant = 0
-n = 100
+n = 50
 nota_ant = -1000
 notas = []
 for j in range(n):
     os.mkdir('./avl/configs/%s/geracao-%d' % (code, j+1))
     avl.caminho_geometrias = './avl/configs/%s/geracao-%d/' % (code,j + 1)
-    candidatos = optimizer.reproducao(candidatos, 0.0005*(n - j))
+    candidatos = optimizer.reproducao(candidatos, 0.0001*(n - j))
     melhor = max(candidatos, key= lambda a : a.nota)
     print("geração %d: %.3f" % (j+1, melhor.nota))
-    print("CM0 = %.4f CMa = %.4f CL/CD = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% PV = %.2f pouso = %.2f perf = %s ar = %.3f" % (melhor.CM0, melhor.CMa, melhor.CL_CD, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.peso_vazio, melhor.x_pouso, melhor.perfil_asa, melhor.ARw))
+    print("cw = %.3f CL/CD = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% PV = %.2f pouso = %.2f decolagem = %.2f cma = %.2f arw = %.3f arh = %.3f" % (melhor.cw, melhor.CL_CD, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.peso_vazio, melhor.x_pouso, melhor.x_decolagem, melhor.CMa, melhor.ARw, melhor.ARh))
     notas.append(melhor.nota)
-    if abs(melhor.nota - sum(notas)/5) < 0.5 and len(notas) == 10:
+    if abs(melhor.nota - sum(notas)/5) < 0.1 and len(notas) == 5:
         break
-    if len(notas) == 9:
+    if len(notas) == 5:
         notas.pop(0)
 
-candidatos.sort(key=lambda a : a.nota)
+candidatos.sort(key=lambda a : a.nota, reverse=True)
 os.mkdir('./avl/configs/%s/resultado' % code)
 avl.caminho_geometrias = './avl/configs/%s/resultado/' % code
-for escolhido in candidatos[:10]:
-    print("%s\n\tSw = %.2f bw = %.2f VH = %.2f VV = %.2f atrim = %.2f ME = %.2f%% PV = %.2f" % (escolhido.nome, escolhido.Sw, escolhido.bw, escolhido.VH, escolhido.VV, escolhido.atrim, escolhido.ME*100, escolhido.peso_vazio))
-    avl.criar_arquivo(escolhido)
+i = 1
+for melhor in candidatos[:10]:
+    melhor.nome = '%d'%i
+    i += 1
+    print("%s\n  cw = %.3f CL/CD = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% PV = %.2f pouso = %.2f decolagem = %.2f perf = %s arw = %.3f arh = %.3f" % (melhor.nome, melhor.cw, melhor.CL_CD, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.peso_vazio, melhor.x_pouso, melhor.x_decolagem, melhor.perfil_asa, melhor.ARw, melhor.ARh))
+    avl.criar_arquivo(melhor, False)

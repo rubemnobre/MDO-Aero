@@ -8,7 +8,7 @@ n_selecionados = 50
 b_min_w = 1.5
 c_min_w = 0.2
 b_max_w = 3.0
-c_max_w = 0.6
+c_max_w = 0.5
 
 b_min_h = 0.1
 c_min_h = 0.1
@@ -26,7 +26,7 @@ lambda_max_v = 0.95
 iw_max = 5
 ih_max = -5
 
-mtow_min = 16
+mtow_min = 14
 mtow_max = 16
 
 offset_max = 0.4
@@ -63,14 +63,15 @@ def gerar_inicial():
         
         geometria_ev = [(0, crv, 0), (bv, ctv, crv-ctv)]
 
-        iw =  random.uniform(0, iw_max)
-        ih =  random.uniform(ih_max, 0)
+        iw =  round(random.uniform(0, iw_max))
+        ih =  round(random.uniform(ih_max, 0))
         
         ht = random.uniform(0, ht_max)
+        lt = random.uniform(cr, soma_dims - ch - b*2)
 
         mtow = random.uniform(mtow_min, mtow_max)
 
-        posicoes = { 'asa' : (0,0), 'eh' : (soma_dims - ch - b*2, ht), 'ev' : (soma_dims - crv - b*2, ht) }
+        posicoes = { 'asa' : (0,0), 'eh' : (lt, ht), 'ev' : (soma_dims - crv - b*2, ht) }
         perfil_asa = random.choice(perfis_asa)
         perfil_eh = random.choice(perfis_eh)
         perfil_ev = random.choice(perfis_ev)
@@ -88,32 +89,35 @@ def variar(aeronave, sigma):
     
     ch = geometria_eh[0][1]
     bh = geometria_eh[1][0]
-
+    
     crv = geometria_ev[0][1]
     ctv = geometria_ev[1][1]
     bv  = geometria_ev[1][0]
     
-    br = trunc_gauss(br, sigma, b_min_w/2, b_max_w/2 - 0.1)
-    bt = trunc_gauss(bt, sigma, 0.1, b_max_w/2 - bt)
-    cr = trunc_gauss(cr, sigma, ct, c_max_w)
-    o1 = trunc_gauss(o1, sigma, 0, offset_max)
-    ct = trunc_gauss(ct, sigma, c_min_w, cr)
-    b = bt + br
+    br = round(trunc_gauss(br, sigma, b_min_w/2, b_max_w/2 - 0.1), 2)
+    bt = round(trunc_gauss(bt, sigma, 0.1, b_max_w/2 - bt), 2)
+    cr = round(trunc_gauss(cr, sigma, ct, c_max_w), 2)
+    o1 = round(trunc_gauss(o1, sigma, 0, offset_max), 2)
+    ct = round(trunc_gauss(ct, sigma, c_min_w, cr), 2)
+    b = round(bt + br, 2)
 
-    ch = trunc_gauss(ch, sigma, c_min_h, c_max_h)
-    bh = trunc_gauss(bh, sigma, b_min_h/2, b_max_h/2)
+    ch = round(trunc_gauss(ch, sigma, c_min_h, c_max_h), 2)
+    bh = round(trunc_gauss(bh, sigma, b_min_h/2, b_max_h/2), 2)
 
-    ctv = trunc_gauss(ctv, sigma, c_min_v, crv)
-    bv = trunc_gauss(bv, sigma, b_min_v, b_max_v)
-    lambda_v = ctv/crv
-    lambda_v = trunc_gauss(lambda_v, sigma, lambda_min_v, lambda_max_v)
-    ctv = lambda_v*crv
+    ctv = round(trunc_gauss(ctv, sigma, c_min_v, crv), 2)
+    bv = round(trunc_gauss(bv, sigma, b_min_v, b_max_v), 2)
+    lambda_v = round(ctv/crv, 2)
+    lambda_v = round(trunc_gauss(lambda_v, sigma, lambda_min_v, lambda_max_v), 2)
+    ctv = round(lambda_v*crv, 2)
 
-    iw = trunc_gauss(aeronave.iw, sigma*10, 0, iw_max)
-    ih = trunc_gauss(aeronave.ih, sigma, ih_max, 0)
+    iw = round(trunc_gauss(aeronave.iw, sigma, 0, iw_max))
+    ih = round(trunc_gauss(aeronave.ih, sigma, ih_max, 0))
     
-    ht = aeronave.posicoes['eh'][1]
-    ht = trunc_gauss(ht, sigma, 0, ht_max)
+    ht = round(aeronave.posicoes['eh'][1], 2)
+    ht = round(trunc_gauss(ht, sigma, 0, cr), 2)
+    
+    lt = round(aeronave.posicoes['eh'][0], 2)
+    lt = round(trunc_gauss(lt, sigma, cr, soma_dims - ch - b*2), 2)
 
     mtow = trunc_gauss(aeronave.mtow, sigma, mtow_min, mtow_max)
 
@@ -121,7 +125,7 @@ def variar(aeronave, sigma):
     geometria_eh = [(0, ch, 0), (bh, ch, 0)]
     geometria_ev = [(0, crv, 0), (bv, ctv, crv-ctv)]
 
-    posicoes = { 'asa' : (0,0), 'eh' : (soma_dims - ch - b*2, ht), 'ev' : (soma_dims - crv - b*2, ht) }
+    posicoes = { 'asa' : (0,0), 'eh' : (lt, ht), 'ev' : (lt, ht) }
 
     return Monoplano(geometria_asa, aeronave.perfil_asa, iw, geometria_eh, aeronave.perfil_eh, ih, geometria_ev, aeronave.perfil_ev, posicoes, mtow)
 

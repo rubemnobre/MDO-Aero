@@ -34,33 +34,39 @@ class Monoplano:
         self.perfil_eh = perfil_eh
         self.perfil_ev = perfil_ev
         self.nome = random.choice(nomes) + '-' + random.choice(nomes) + '-' + str(random.randint(1000, 9999))
-        self.res0 = resultados_avl(self, 0)
+        self.hw = 0.2416 #altura da asa
+        self.res0 = resultados_avl(self, 0, False)
         self.CM0 = self.res0['CM']
         self.CL0 = self.res0['CL']
         self.CLa = self.res0['CLa']
         self.CMa = self.res0['CMa']
         self.Xnp = self.res0['Xnp']
-        self.phi = ((16*0.2416/self.bw)**2)/(1 + ((16*0.2416/self.bw)**2))
-        self.K = self.phi/(pi*0.85*self.ARw)
-        self.CD0 = self.res0['CD'] - self.K*self.CL0*self.CL0
+
+        self.resgnd = resultados_avl(self, 0, True)
+        self.phi = ((16*self.hw/self.bw)**2)/(1 + ((16*self.hw/self.bw)**2))
+        self.K = 1/(pi*0.85*self.ARw)
+        self.CD0 = self.resgnd['CD'] - self.K*self.CL0**2
+
         self.atrim = -self.CM0/self.CMa
         self.ME = (self.Xnp - self.xcg)/self.bw
         CL = self.CL0 + self.atrim*self.CLa
-        self.CL_CD = CL/self.polar_arrasto(CL)
+        self.CL_CD = CL/self.polar_arrasto(CL, 1)
         
         self.vestol = math.sqrt(2*self.mtow*g/(rho*self.Sw*CLmax))
 
         vd = 1.1*self.vestol
-        L = 0.5*rho*self.Sw*self.CL0*(0.7*vd)**2
-        D = 0.5*rho*self.Sw*self.polar_arrasto(self.CL0)* (0.7*vd)**2
+        L = 0.5*rho*self.Sw*self.resgnd['CL']*(0.7*vd)**2
+        D = 0.5*rho*self.Sw*self.polar_arrasto(self.resgnd['CL'], self.phi)* (0.7*vd)**2
         T = tracao(0.7*vd)
         W = self.mtow*g
         self.x_decolagem = 1.44*(W**2)/(g*rho*self.Sw*CLmax*(T - D - mu*(W - L)))
+        #self.x_decolagem = self.decolagem()
 
         vp = 1.3*self.vestol
-        L = 0.5*rho*self.Sw*self.CL0*(0.7*vp)**2
-        D = 0.5*rho*self.Sw*self.polar_arrasto(self.CL0)* (0.7*vp)**2
+        L = 0.5*rho*self.Sw*self.resgnd['CL']*(0.7*vp)**2
+        D = 0.5*rho*self.Sw*self.polar_arrasto(self.resgnd['CL'], self.phi)* (0.7*vp)**2
         self.x_pouso = 1.69*(W**2)/(g*rho*self.Sw*CLmax*(D + mu*(W - L)))
+        #self.x_pouso = self.pouso()
 
         self.avaliar()
     
@@ -73,8 +79,8 @@ class Monoplano:
         self.VH = (self.lh*self.Sh)/(self.cw*self.Sw)
         self.VV = (self.Sv*self.lv)*2/(self.Sw*self.bw)
 
-    def polar_arrasto(self, CL):
-        return self.CD0 + self.K*(CL**2)
+    def polar_arrasto(self, CL, phi):
+        return self.CD0 + phi*self.K*(CL**2)
 
     def estimar_cg(self):
         massaHELICE2021 = 0.11174  # ajustar #
@@ -134,35 +140,82 @@ class Monoplano:
         peso_vazio = self.mtow - carga_paga
         return PosXCG, carga_paga, peso_vazio
     
+    def decolagem(self):
+        CL = self.resgnd['CL']
+        CD = self.resgnd['CD']
+        W = self.mtow*g
+        v = 0
+        x = 0
+        t = 0
+        dt = 0.01
+        L = 0
+        while L <= W:
+            L = 0.5*rho*v*v*self.Sw*CL
+            D = 0.5*rho*v*v*self.Sw*CD
+            R = mu*(W-L)
+            T = tracao(v)
+            a = (T - R - D)/self.mtow
+            v += a*dt
+            x += v*dt
+            t += dt
+        return x
+    
+    def pouso(self):
+        CL = self.resgnd['CL']
+        CD = self.resgnd['CD']
+        W = self.mtow*g
+        v = 1.3*self.vestol
+        x = 0
+        t = 0
+        dt = 0.01
+        L = 0
+        while v >= 0.1:
+            L = 0.5*rho*v*v*self.Sw*CL
+            D = 0.5*rho*v*v*self.Sw*CD
+            R = mu*(W-L)
+            a = (-R - D)/self.mtow
+            v += a*dt
+            x += v*dt
+            t += dt
+        return x
+
     def avaliar(self):
         res = 0
         # Requesitos de estabilidade estática e dinâmica (sadraey tabela 6.3)
 
         CLtrim = self.CL0 + self.atrim*self.CLa
         CLcruzeiro = (2*g*self.mtow)/(rho*(v_cruzeiro**2)*self.Sw)
+        
+        res += func_erro_neg(CLtrim, CLmax, 100)
+        res += func_erro_neg(self.CMa, 0, 10000)
+        res += func_erro_neg(0, self.atrim, 1000)
 
-        if CLtrim > CLmax:
-            res -= 100*(CLtrim - CLmax)
-
-        res += 2*func_erro(self.CMa * 180/pi, -0.1, -0.8)
+        res += 10*func_erro(self.CMa * 180/pi, -0.1, -0.8)
         res += 2*func_erro(self.res0['CMq'] * 180/pi, -5, -40)
         res += 2*func_erro(self.res0['Cnb'] * 180/pi, 0.05, 0.4)
         res += 2*func_erro(self.res0['Cnr'] * 180/pi, -0.1, -1)
-        res += 10*func_erro(self.ME, 0.07, 0.15)
+        res += 100*func_erro(self.ME, 0.08, 0.12)
 
         res += func_erro(self.VH, 0.3, 0.5)
-        res += 0.3*func_erro(self.VV, 0.02, 0.05)
-        res += 3*func_erro(self.atrim, 0, 6)
-        res += 5*func_erro(self.CL_CD, 10, 50)
-        res += 5*func_erro(self.x_pouso, 80, 120)
-        res += 3*func_erro(CLtrim, CLcruzeiro - 0.1, CLcruzeiro + 0.1)
-        res += 15*func_erro(self.ARw, 5, 8)
-        res += -2*self.peso_vazio
+        res += func_erro(self.VV, 0.02, 0.05)
+        res += 2*func_erro(self.CL_CD, 10, 50)
+        res += 5*func_erro(self.x_pouso, 50, 150)
+        res += 10*func_erro(self.x_decolagem, 49, 50)
+        res += 5*func_erro(CLtrim, CLcruzeiro - 0.1, CLcruzeiro + 0.1)
+        res += 1*func_erro(self.ARw, 4, 8)
+        res += 1*func_erro(self.ARh, 3, 5)
+        res += 10*(self.carga_paga)**2
         self.nota = res
 
 def func_erro(valor, bot, top):
     weight = 4/((bot-top)**2)
     return -weight*(valor - bot)*(valor - top)
+
+def func_erro_neg(valor, top, w):
+    if valor < top:
+        return 1
+    else:
+        return 1-(w*(valor-top))**2
 
 def tracao(v):
     return 46.439 - 0.935*v - 0.0144*v*v

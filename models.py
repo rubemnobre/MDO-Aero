@@ -6,7 +6,7 @@ import math
 n = 1
 rho = 1.16
 g = 9.81
-CLmax = 2.3
+CLmax = 2.15
 mu = 0.09
 v_cruzeiro = 16
 pi = 3.1415926535897932384626433832795
@@ -35,26 +35,32 @@ class Monoplano:
         self.perfil_ev = perfil_ev
         self.nome = random.choice(nomes) + '-' + random.choice(nomes) + '-' + str(random.randint(1000, 9999))
         self.hw = 0.2416 #altura da asa
-        self.res0 = resultados_avl(self, 0, False)
+        self.res0 = resultados_avl(self, ('alpha', 0))
         self.CM0 = self.res0['CM']
         self.CL0 = self.res0['CL']
         self.CLa = self.res0['CLa']
         self.CMa = self.res0['CMa']
         self.Xnp = self.res0['Xnp']
 
-        self.resgnd = resultados_avl(self, 0, True)
+        self.resgnd = resultados_avl(self, ('solo', 0))
         self.phi = ((16*self.hw/self.bw)**2)/(1 + ((16*self.hw/self.bw)**2))
         self.K = 1/(pi*0.85*self.ARw)
         self.CD0 = self.resgnd['CD'] - self.K*self.CL0**2
 
-        self.atrim = -self.CM0/self.CMa
-        self.ME = (self.Xnp - self.xcg)/self.bw
-        CL = self.CL0 + self.atrim*self.CLa
-        self.CL_CD = CL/self.polar_arrasto(CL, 1)
+        self.restrim = resultados_avl(self, ('trim', 0))
+        if self.restrim != None:
+            self.atrim = self.restrim['Alpha']
+            self.CL_CD = self.restrim['CL']/self.restrim['CD']
+            self.CLtrim = self.restrim['CL']
+        else:
+            self.atrim = -self.CM0/self.CMa
+            self.CLtrim = (self.CLa*self.atrim + self.CL0)
+            self.CL_CD = self.CLtrim/self.polar_arrasto(self.CLtrim, 1)
+        self.ME = (self.Xnp - self.xcg)/self.cw
         
         self.vestol = math.sqrt(2*self.mtow*g/(rho*self.Sw*CLmax))
 
-        vd = 1.1*self.vestol
+        vd = 1.2*self.vestol
         L = 0.5*rho*self.Sw*self.resgnd['CL']*(0.7*vd)**2
         D = 0.5*rho*self.Sw*self.polar_arrasto(self.resgnd['CL'], self.phi)* (0.7*vd)**2
         T = tracao(0.7*vd)
@@ -127,7 +133,7 @@ class Monoplano:
         carga_paga = self.mtow - (massaHELICE2021 + massaMOTOR2021 + massaTANQUEVAZIO2021 + massaCAIXAELETRICO2019 + massaFUSELAGEM2019 + massaASA2021 + massaEH2021 + massaEV2021)
 
         massaCARGAPAGA = carga_paga  # ajustar #
-        bracoCARGAPAGA2019 = 0.25 + 0.25*self.cw
+        bracoCARGAPAGA2019 = 0.25 + self.posicoes['cp'][0]
         momentoCARGAPAGA = g * massaCARGAPAGA * bracoCARGAPAGA2019
 
         SomaMomentos = momentoHELICE + momentoMOTOR + momentoTANQUEVAZIO + momentoCAIXAELETRICO + momentoFUSELAGEM + \
@@ -156,10 +162,127 @@ class Monoplano:
             T = tracao(v)
             a = (T - R - D)/self.mtow
             v += a*dt
-            x += v*dt
+            x += v*dt + 0.5*a*dt*dt
             t += dt
         return x
     
+    def decolagem_old(self):
+        Lf = 0.11  # Alterar - LARGURA DA FUSELAGEM 0.11 POR ENQUANTO#
+
+        Areah = self.Sh
+        Arh = self.ARh
+        HT = self.posicoes['eh'][1]
+        BHT = self.bh
+        CHT = self.ch
+        modelo = "Monoplano"
+        Areaw = self.Sw
+        B = self.bw
+        cordar = self.geometria_asa[0][1]
+        Ar = self.ARw
+        MTOW = self.mtow
+        v_ari = 0
+        CMA = self.cw
+        CVMED = self.cv
+        viscosidade = 1.6 * 10 ** (-5)
+
+        eh = 1.78 * (1 - (0.045 * (Arh ** 0.68))) - 0.64  # coeficiente de Oswald (Gudmudsson)#
+
+        kh = 1 / (pi * Arh * eh)
+
+        hw = 0.2416  # (valor fixado incialmente) Altura da asa em relacao ao solo#
+        ht = hw + HT
+
+        sigmah = (16 * ht / BHT) ** 2 / (1 + (16 * ht / BHT) ** 2)
+        Sweth = (Areah - (CHT * 0.11)) * 1.07 * 2
+
+        c_atrito = 0.09
+        clh = (c_atrito) / (2 * kh * sigmah)
+
+        if modelo == "Monoplano" or modelo == "MonoVoador":
+            sigmaw = (16 * hw / B) ** 2 / (1 + (16 * hw / B) ** 2)  # Prediz o efeito solo#
+            Swetw = (Areaw - (cordar * Lf)) * 1.07 * 2  # Area molhada da asa#
+            if modelo == "Monoplano":
+                ew = 1.78 * (1 - (0.045 * (Ar ** 0.68))) - 0.64  # coeficiente de Oswald (Gudmudsson)#
+
+        kw = 1 / (pi * Ar * ew)  # Constante de proporcionalidade#
+        clw = (c_atrito) / (
+                2 * kw * sigmaw)  # Coeficiente de sustentacao para o menor comprimento de pista para decolagem#
+        m = MTOW  # MTOW desejado#
+        x = 0
+        v = 0  # Velocidade em relacao ao solo#
+        t = 0
+        v_ar = v + v_ari
+        L = 0.5 * rho * (v_ar ** 2) * Areaw * clw
+        delta_t = 0.01
+
+        while L < m * g:  # decolagem#
+            Re = rho * v_ar * CMA / viscosidade
+            if Re > 0:
+                if Re > 3.5e5:  # De acordo com o Roskam, a partir daqui acaba sendo parte laminar e parte turbulento#
+                    cfw = 0.455 / (
+                            (math.log10(Re)) ** 2.58) - 1700 / Re  # Coeficiente de Friccao de arrasto transicao(Gudmudsson)#
+                elif Re > 1e7:
+                    cfw = 0.455 / ((math.log10(Re)) ** 2.58)  # Coeficiente de Friccao turbulento#
+                else:
+                    cfw = 1.328 / (Re ** 0.5)  # Coeficiente de Friccao de arrasto laminar (Gudmudsson)#
+                Rev = rho * v_ar * CVMED / viscosidade
+                if Rev > 3.5e5:  # De acordo com o Roskam, a partir daqui acaba sendo parte laminar e parte turbulento#
+                    cfv = 0.455 / (
+                            (math.log10(Re)) ** 2.58) - 1700 / Re  # Coeficiente de Friccao de arrasto transicao(Gudmudsson)#
+                elif Rev > 1e7:
+                    cfv = 0.455 / ((math.log10(Re)) ** 2.58)  # Coeficiente de Friccao turbulento#
+                else:
+                    cfv = 1.328 / (Re ** 0.5)  # Coeficiente de Friccao de arrasto laminar (Gudmudsson)#
+
+                cdfw = (Swetw / Areaw) * cfw
+
+                cdw = cdfw + sigmaw * kw * clw ** 2  # Coeficiente de arrasto#
+                cdv = cfv
+                Dv = 0.5 * rho * (v_ar ** 2) * Areah * cdv
+            
+                if modelo == "Monoplano" or modelo == "Biplano":
+                    Reh = rho * v_ar * CHT / viscosidade
+                    if Reh > 3.5 * 10 ** 5:  # De acordo com o Roskam, a partir daqui acaba sendo parte laminar e parte turbulento#
+                        cfh = 0.455 / (
+                                (math.log10(Reh)) ** 2.58) - 1700 / Reh  # Coeficiente de Friccao de arrasto transicao(Gudmudsson)#
+                    elif Reh > 1 * 10 ** 7:
+                        cfw = 0.455 / ((math.log10(Re)) ** 2.58)  # Coeficiente de Friccao turbulento#
+                    else:
+                        cfh = 1.328 / (Reh ** 0.5)  # Coeficiente de Friccao de arrasto laminar (Gudmudsson)#
+
+                    cdfh = (Sweth / Areah) * cfh
+                    cdh = cdfh + sigmah * kh * clh ** 2
+
+                    Lw = 0.5 * rho * (v_ar ** 2) * Areaw * clw
+                    Lh = 0.5 * rho * (v_ar ** 2) * Areah * clh
+                    L = Lw - Lh
+
+                    Dw = 0.5 * rho * (v_ar ** 2) * Areaw * cdw
+                    Dh = 0.5 * rho * (v_ar ** 2) * Areah * cdh
+                    D = Dw + Dh + Dv
+                else:
+                    L = 0.5 * rho * (v_ar ** 2) * Areaw * clw
+                    Dw = 0.5 * rho * (v_ar ** 2) * Areaw * cdw
+                    D = Dw + Dv
+            else:
+                L = 0
+                D = 0
+
+            t = t + delta_t
+            
+            T = -0.0144 * v ** 2 - 0.935 * v + 46.4  # Dados que vem do ensaio de tracao#
+            R = c_atrito * (m * g - L)  # Forca de atrito#
+            Eforcas = T - D - R
+            a = Eforcas / m  # aceleracao#
+            v = v + delta_t * a  # velocidade instantanea da aeronave#
+            x = x + delta_t * v  # pista#
+            v_ar = v + v_ari
+
+        v = v - delta_t * a  # Retirar o ultimo acrescimo#
+        x = x - delta_t * v
+        cl = L / (0.5 * rho * (v ** 2) * (Areaw))
+        return x
+
     def pouso(self):
         CL = self.resgnd['CL']
         CD = self.resgnd['CD']
@@ -175,36 +298,38 @@ class Monoplano:
             R = mu*(W-L)
             a = (-R - D)/self.mtow
             v += a*dt
-            x += v*dt
+            x += v*dt + 0.5*a*dt*dt
             t += dt
         return x
 
     def avaliar(self):
         res = 0
         # Requesitos de estabilidade estática e dinâmica (sadraey tabela 6.3)
-
-        CLtrim = self.CL0 + self.atrim*self.CLa
         CLcruzeiro = (2*g*self.mtow)/(rho*(v_cruzeiro**2)*self.Sw)
         
-        res += func_erro_neg(CLtrim, CLmax, 100)
-        res += func_erro_neg(self.CMa, 0, 10000)
+        self.dist_fuga = math.sqrt((self.posicoes['eh'][1])**2 + (self.geometria_asa[0][1] - self.posicoes['eh'][0])**2)
+
+        res += func_erro_neg(self.cw, self.dist_fuga, 10000)
+        res += func_erro_neg(self.CLtrim, CLmax, 100)
+        res += func_erro_neg(self.CMa, 0, 1000)
+        res += func_erro_neg(0, self.CM0, 1000)
         res += func_erro_neg(0, self.atrim, 1000)
 
         res += 10*func_erro(self.CMa * 180/pi, -0.1, -0.8)
         res += 2*func_erro(self.res0['CMq'] * 180/pi, -5, -40)
-        res += 2*func_erro(self.res0['Cnb'] * 180/pi, 0.05, 0.4)
+        res += 0.1*func_erro(self.res0['Cnb'] * 180/pi, 0.05, 0.4)
         res += 2*func_erro(self.res0['Cnr'] * 180/pi, -0.1, -1)
-        res += 100*func_erro(self.ME, 0.08, 0.12)
+        res += 500*func_erro(self.ME, 0.05, 0.15)
 
-        res += func_erro(self.VH, 0.3, 0.5)
-        res += func_erro(self.VV, 0.02, 0.05)
+        res += 3*func_erro(self.VH, 0.3, 0.5)
+        res += 3*func_erro(self.VV, 0.02, 0.05)
         res += 2*func_erro(self.CL_CD, 10, 50)
-        res += 5*func_erro(self.x_pouso, 50, 150)
-        res += 10*func_erro(self.x_decolagem, 49, 50)
-        res += 5*func_erro(CLtrim, CLcruzeiro - 0.1, CLcruzeiro + 0.1)
-        res += 1*func_erro(self.ARw, 4, 8)
-        res += 1*func_erro(self.ARh, 3, 5)
-        res += 10*(self.carga_paga)**2
+        res += 5*func_erro(self.x_pouso, 80, 120)
+        res += 20*func_erro(self.x_decolagem, 48, 49)
+        res += 10*func_erro(self.CLtrim, CLcruzeiro - 0.1, CLcruzeiro + 0.1)
+        res += 5*func_erro(self.ARw, 4, 8)
+        res += 50*func_erro(self.ARh, 3, 5)
+        res += 100*(self.carga_paga)**2
         self.nota = res
 
 def func_erro(valor, bot, top):

@@ -30,42 +30,60 @@ def criar_arquivo(aeronave, efeito_solo):
     arq.write("COMPONENT\n1\n")
     for sect in aeronave.geometria_asa:
         arq.write("SECTION\n")
-        arq.write("%.2f %.2f 0.0 %.2f 0\n" % (sect[2], sect[0], sect[1])) # Xle    Yle    Zle     Chord   Ainc
+        arq.write("%.2f %.2f 0.0 %.2f 0.0\n" % (sect[2], sect[0], sect[1])) # Xle    Yle    Zle     Chord   Ainc
         arq.write("AFILE\navl/%s.dat\n" % aeronave.perfil_asa)
-    
+
     arq.write("\nSURFACE\n")
     arq.write("EH\n")
     arq.write("4 1.0 6 1.0\n") # Discretização
+    arq.write("TRANSLATE\n")
+    arq.write("%.2f %.2f %.2f\n" % (aeronave.posicoes["eh"][0], 0, aeronave.posicoes["eh"][1]))
     arq.write("YDUPLICATE\n0.0\n")
     arq.write("ANGLE\n%.0f\n" % aeronave.ih)
     arq.write("COMPONENT\n2\n")
     for sect in aeronave.geometria_eh:
         arq.write("SECTION\n")
-        arq.write("%.2f %.2f %.2f %.2f 0\n" % (aeronave.posicoes["eh"][0] + sect[2], sect[0], aeronave.posicoes["eh"][1], sect[1])) # Xle    Yle    Zle     Chord   Ainc
+        arq.write("%.2f %.2f %.2f %.2f 0.0\n" % (sect[2], sect[0], 0, sect[1])) # Xle    Yle    Zle     Chord   Ainc
         arq.write("AFILE\navl/%s.dat\n" % aeronave.perfil_eh)
 
     arq.write("\nSURFACE\n")
     arq.write("EV\n")
     arq.write("4 1.0 6 1.0\n") # Discretização
+    arq.write("TRANSLATE\n")
+    arq.write("%.2f %.2f %.2f\n" % (aeronave.posicoes["ev"][0], 0, aeronave.posicoes["ev"][1]))
     arq.write("YDUPLICATE\n0.0\n")
     arq.write("COMPONENT\n2\n")
     for sect in aeronave.geometria_ev:
         arq.write("SECTION\n")
-        arq.write("%.2f %.2f %.2f %.2f 0\n" % (aeronave.posicoes["ev"][0] + sect[2], aeronave.bh/2, sect[0] +  aeronave.posicoes["ev"][1], sect[1])) # Xle    Yle    Zle     Chord   Ainc
+        arq.write("%.2f %.2f %.2f %.2f 0.0\n" % (sect[2], aeronave.bh/2, sect[0], sect[1])) # Xle    Yle    Zle     Chord   Ainc
         arq.write("AFILE\navl/%s.dat\n" % aeronave.perfil_ev)
     arq.close()
 
-def resultados_avl(aeronave, alpha, efeito_solo): # CM0, CL0, CLa, CMa, Xnp
-    criar_arquivo(aeronave, efeito_solo)
+def resultados_avl(aeronave, comando): # CM0, CL0, CLa, CMa, Xnp
     process = subprocess.Popen(['avl'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-    if efeito_solo == False:
-        out = process.communicate(bytes('load %s\noper\na a %.3f\nx\nst\n\nquit\n' % (caminho_geometrias + aeronave.nome, alpha), 'utf-8'))[0]
+    if comando[0] == 'solo':
+        criar_arquivo(aeronave, True)
+        out = process.communicate(bytes('load %s\noper\na a %.3f\nx\nst\n\nquit\n' % (caminho_geometrias + aeronave.nome + '-ge', comando[1]), 'utf-8'))[0]
     else:
-        out = process.communicate(bytes('load %s\noper\na a %.3f\nx\nst\n\nquit\n' % (caminho_geometrias + aeronave.nome + '-ge', alpha), 'utf-8'))[0]
+        criar_arquivo(aeronave, False)
+        if comando[0] == 'alpha':
+            out = process.communicate(bytes('load %s\noper\na a %.3f\nx\nst\n\nquit\n' % (caminho_geometrias + aeronave.nome, comando[1]), 'utf-8'))[0]
+        if comando[0] == 'trim':
+            out = process.communicate(bytes('load %s\noper\na pm %.3f\nx\nst\n\nquit\n' % (caminho_geometrias + aeronave.nome, 0), 'utf-8'))[0]
+        
     process.terminate()
     output = out.decode('utf-8')
     results = dict()
     
+    match = re.search(r'Execute flow calculation first!', output)
+    if match:
+        return None
+    else:
+        match = re.search(r'Alpha =..........', output)
+        if match == None:
+            print(output)
+        results['Alpha'] = float(output[match.start() + 7:match.start() + 17])
+
     match = re.search(r'(Cmtot =..........)', output)
     results['CM'] = float(output[match.start() + 7:match.start() + 17])
 

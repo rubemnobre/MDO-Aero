@@ -22,7 +22,7 @@ for j in range(n):
     candidatos = optimizer.reproducao(candidatos, 0.02)
     melhor = max(candidatos, key= lambda a : a.nota)
     print("geração %d: %.3f" % (j+1, melhor.nota))
-    print("cp = %.3f CL/CD = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% PV = %.2f pouso = %.2f decolagem = %.2f cma = %.2f arw = %.3f arh = %.3f" % (melhor.posicoes['cp'][0], melhor.CL_CD, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.peso_vazio, melhor.x_pouso, melhor.x_decolagem, melhor.CMa, melhor.ARw, melhor.ARh))
+    print("xcp = %.3f CL/CD = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% CP = %.2f pouso = %.2f decolagem = %.2f cma = %.2f arw = %.3f arh = %.3f" % (melhor.posicoes['cp'][0], melhor.CL_CD, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.carga_paga, melhor.x_pouso, melhor.x_decolagem, melhor.CMa, melhor.ARw, melhor.ARh))
     notas.append(melhor.nota)
     if abs(melhor.nota - sum(notas)/5) < 1 and len(notas) == 5:
         break

@@ -2,7 +2,7 @@ import random
 from models import Monoplano
 from avl import criar_arquivo
 
-n_candidatos = 100
+n_candidatos = 150
 n_selecionados = 50
 
 b_min_w = 1.5
@@ -37,15 +37,15 @@ n_sect = 3
 dist_nariz = 0.295
 soma_dims = 3.2 - dist_nariz
 
-#perfis_asa = ['FX 74-Cl5-140 MOD (smoothed)', 'S1223 RTL', 'CH10 (smoothed)', 'DAE-21 AIRFOIL', 'WORTMANN FX 63-137 AIRFOIL']
+#perfis_asa = ['FX 74-Cl5-140 MOD (smoothed)', 'S1223 RTL', 'CH10 (smoothed)', 'DAE-21 AIRFOIL', 'WORTMANN FX 63-137 AIRFOIL', 'e423']
 #perfis_eh = ['e168', 'e169', 'e479', 'n0012', 'naca0015']
-perfis_asa = ['s1223']
+perfis_asa = ['WORTMANN FX 63-137 AIRFOIL']
 perfis_eh = ['e168']
 perfis_ev = ['e169']
 
-def gerar_inicial():
+def gerar_inicial(total):
     aeronaves = []
-    for i in range(n_candidatos):
+    for i in range(total):
         cr = random.uniform(c_min_w, c_max_w)
         ct = random.uniform(c_min_w, cr)
         br = random.uniform(b_min_w/2, b_max_w/2 - 0.1)
@@ -144,8 +144,9 @@ def reproducao(gerados, sigma):
     pais = sorted(gerados, key= lambda a : a.nota, reverse=True)[:n_selecionados]
     filhos = []
     for pai in pais:
-        for i in range(int(len(gerados)/len(pais))):
+        for i in range(int(len(gerados)/len(pais)) - 1):
             filhos.append(variar(pai, sigma))
+        filhos.append(pai)
     return filhos
 
 def trunc_gauss(mu, sigma, bottom, top):

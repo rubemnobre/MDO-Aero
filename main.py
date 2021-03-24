@@ -5,14 +5,21 @@ import avl
 import os
 import random
 import pickle
+import sys
 
-code = str(random.randint(10000, 99999))
+optimizer.perfis_asa[0] = sys.argv[1]
+print(optimizer.perfis_asa[0])
+
+code = optimizer.perfis_asa[0] + '-' + optimizer.perfis_eh[0] + '-' + str(random.randint(100, 999))
 os.mkdir('./avl/configs/'+code+'/')
 os.mkdir('./avl/configs/%s/geracao-%d' % (code, 0))
 
 avl.caminho_geometrias = './avl/configs/%s/geracao-%d/' % (code, 0)
 
-candidatos = optimizer.gerar_inicial()
+inicial = optimizer.gerar_inicial(300)
+
+candidatos = sorted(inicial, key = lambda a : a.nota, reverse = True)[:optimizer.n_candidatos]
+
 ant = 0
 n = 100
 nota_ant = -1000
@@ -20,7 +27,7 @@ notas = []
 for j in range(n):
     os.mkdir('./avl/configs/%s/geracao-%d' % (code, j+1))
     avl.caminho_geometrias = './avl/configs/%s/geracao-%d/' % (code,j + 1)
-    candidatos = optimizer.reproducao(candidatos, 0.02)
+    candidatos = optimizer.reproducao(candidatos, 0.01)
     melhor = max(candidatos, key= lambda a : a.nota)
     print("geração %d: %.3f" % (j+1, melhor.nota))
     print("xcp = %.3f CL/CD = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% CP = %.2f pouso = %.2f decolagem = %.2f cma = %.2f arw = %.3f arh = %.3f" % (melhor.posicoes['cp'][0], melhor.CL_CD, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.carga_paga, melhor.x_pouso, melhor.x_decolagem, melhor.CMa, melhor.ARw, melhor.ARh))
@@ -28,9 +35,9 @@ for j in range(n):
     arq_melhor = open('./avl/configs/%s/geracao-%d/melhor.pyobj' % (code, j + 1), 'wb')
     pickle.dump(melhor, arq_melhor)
     arq_melhor.close()
-    if abs(melhor.nota - sum(notas)/5) < 1 and len(notas) == 5:
+    if abs(melhor.nota - sum(notas)/10) < 0.5 and len(notas) == 10:
         break
-    if len(notas) == 5:
+    if len(notas) == 10:
         notas.pop(0)
 
 candidatos.sort(key=lambda a : a.nota, reverse=True)

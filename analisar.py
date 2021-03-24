@@ -4,9 +4,9 @@ import matplotlib.pyplot as plt
 from avl import resultados_avl
 import csv
 
-caminho = "./avl/configs/17489/resultado/"
-csvwriter = csv.writer(open('res.csv', 'w'))
-csvwriter.writerow(['rank', 'cr', 'ct', 'br', 'bt', 'ch', 'bh', 'crv', 'ctv', 'bv','zt', 'xt', 'xcp', 'xcg', 'ARw', 'ARh', 'PV', 'CP', 'ME', 'dec', 'pouso', 'atrim'])
+caminho = r"C:/Users/rubem/Documents/git/mdo/avl/configs/e423-e168-900/resultado/"
+csvwriter = csv.writer(open('e423-e168-900.csv', 'w'))
+csvwriter.writerow(['rank', 'cr', 'ct', 'br', 'bt', 'ch', 'bh', 'crv', 'ctv', 'bv','zt', 'xt', 'xcp', 'xcg', 'ARw', 'ARh', 'PV', 'CP', 'ME', 'dec', 'pouso', 'atrim', 'perfil_asa', 'perfil_ev'])
 for i in range(10):
     aeronave = pickle.load(open(caminho + str(i + 1) + '.pyobj', 'rb'))
     cr = aeronave.geometria_asa[0][1]
@@ -30,5 +30,7 @@ for i in range(10):
     dec = aeronave.x_decolagem
     pouso = aeronave.x_pouso
     atrim = aeronave.atrim
-    csvwriter.writerow([i, cr, ct, br, bt, ch, bh, crv, ctv, bv, zt, xt, xcp, xcg, ARw, ARh, PV, CP, ME, dec, pouso, atrim])
+    perfil_asa = aeronave.perfil_asa
+    perfil_eh = aeronave.perfil_eh
+    csvwriter.writerow([i, cr, ct, br, bt, ch, bh, crv, ctv, bv, zt, xt, xcp, xcg, ARw, ARh, PV, CP, ME, dec, pouso, atrim, perfil_asa, perfil_eh])
 

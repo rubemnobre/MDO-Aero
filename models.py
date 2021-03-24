@@ -7,6 +7,7 @@ n = 1
 rho = 1.16
 g = 9.81
 CLmax = 2.15
+astall = 13
 mu = 0.09
 v_cruzeiro = 16
 pi = 3.1415926535897932384626433832795
@@ -50,7 +51,10 @@ class Monoplano:
         self.restrim = resultados_avl(self, ('trim', 0))
         if self.restrim != None:
             self.atrim = self.restrim['Alpha']
-            self.CL_CD = self.restrim['CL']/self.restrim['CD']
+            try:
+                self.CL_CD = self.restrim['CL']/self.restrim['CD']
+            except:
+                self.CL_CD = 100
             self.CLtrim = self.restrim['CL']
         else:
             self.atrim = -self.CM0/self.CMa
@@ -58,6 +62,7 @@ class Monoplano:
             self.CL_CD = self.CLtrim/self.polar_arrasto(self.CLtrim, 1)
         self.ME = (self.Xnp - self.xcg)/self.cw
         
+        self.CLmax = self.resgnd['CL'] + (astall - self.iw)*self.resgnd['CLa']
         self.vestol = math.sqrt(2*self.mtow*g/(rho*self.Sw*CLmax))
 
         vd = 1.2*self.vestol
@@ -164,6 +169,8 @@ class Monoplano:
             v += a*dt
             x += v*dt + 0.5*a*dt*dt
             t += dt
+            if x >= 100:
+                break
         return x
     
     def decolagem_old(self):
@@ -310,8 +317,8 @@ class Monoplano:
         self.dist_fuga = math.sqrt((self.posicoes['eh'][1])**2 + (self.geometria_asa[0][1] - self.posicoes['eh'][0])**2)
 
         res += func_erro_neg(self.cw, self.dist_fuga, 10000)
-        res += func_erro_neg(self.CLtrim, CLmax, 100)
-        res += func_erro_neg(self.CMa, 0, 10000)
+        res += func_erro_neg(self.CLtrim, CLmax, 1000)
+        res += func_erro_neg(self.CMa, 0, 100000)
         res += func_erro_neg(0, self.CM0, 1000)
         res += func_erro_neg(0, self.atrim, 1000)
 
@@ -319,17 +326,17 @@ class Monoplano:
         res += 2*func_erro(self.res0['CMq'] * 180/pi, -5, -40)
         res += 0.1*func_erro(self.res0['Cnb'] * 180/pi, 0.05, 0.4)
         res += 2*func_erro(self.res0['Cnr'] * 180/pi, -0.1, -1)
-        res += 100*func_erro(self.ME, 0.05, 0.15)
+        res += 300*func_erro(self.ME, 0.05, 0.15)
 
         res += 3*func_erro(self.VH, 0.3, 0.5)
         res += 3*func_erro(self.VV, 0.02, 0.05)
         res += 2*func_erro(self.CL_CD, 10, 50)
         res += 5*func_erro(self.x_pouso, 80, 120)
-        res += 30*func_erro(self.x_decolagem, 49, 50)
-        res += 10*func_erro(self.CLtrim, CLcruzeiro - 0.1, CLcruzeiro + 0.1)
+        res += 100*func_erro(self.x_decolagem, 48.5, 49.5)
+        res += 20*func_erro(self.CLtrim, CLcruzeiro - 0.1, CLcruzeiro + 0.1)
         res += 5*func_erro(self.ARw, 4, 8)
         res += 50*func_erro(self.ARh, 3, 5)
-        res += 500*(self.carga_paga)**2
+        res += 1000*(self.carga_paga)**2
         self.nota = res
 
 def func_erro(valor, bot, top):

@@ -21,7 +21,7 @@ inicial = optimizer.gerar_inicial(300)
 candidatos = sorted(inicial, key = lambda a : a.nota, reverse = True)[:optimizer.n_candidatos]
 
 ant = 0
-n = 100
+n = 200
 nota_ant = -1000
 notas = []
 for j in range(n):
@@ -30,7 +30,7 @@ for j in range(n):
     candidatos = optimizer.reproducao(candidatos, 0.01)
     melhor = max(candidatos, key= lambda a : a.nota)
     print("geração %d: %.3f" % (j+1, melhor.nota))
-    print("xcp = %.3f CL/CD = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% CP = %.2f pouso = %.2f decolagem = %.2f cma = %.2f arw = %.3f arh = %.3f" % (melhor.posicoes['cp'][0], melhor.CL_CD, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.carga_paga, melhor.x_pouso, melhor.x_decolagem, melhor.CMa, melhor.ARw, melhor.ARh))
+    print("xcp = %.3f CLmax = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% CP = %.2f pouso = %.2f decolagem = %.2f cma = %.2f arw = %.3f arh = %.3f" % (melhor.posicoes['cp'][0], melhor.CLmax, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.carga_paga, melhor.x_pouso, melhor.x_decolagem, melhor.CMa *180/3.1416, melhor.ARw, melhor.ARh))
     notas.append(melhor.nota)
     arq_melhor = open('./avl/configs/%s/geracao-%d/melhor.pyobj' % (code, j + 1), 'wb')
     pickle.dump(melhor, arq_melhor)

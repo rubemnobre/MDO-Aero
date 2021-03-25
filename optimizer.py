@@ -26,8 +26,8 @@ lambda_max_v = 0.95
 pos_cp_min = 0.2
 pos_cp_max = 0.35
 
-iw_max = 5
-ih_max = -5
+iw_max = 7
+ih_max = -7
 
 mtow_min = 14
 mtow_max = 16
@@ -62,7 +62,7 @@ def gerar_inicial(total):
         crv = random.uniform(ch, c_max_v)
         lambda_v = random.uniform(lambda_min_v, lambda_max_v)
         ctv = lambda_v*crv
-        bv = random.uniform(b_min_v, bh/2)
+        bv = random.uniform(b_min_v, bh)
         
         geometria_ev = [(0, crv, 0), (bv, ctv, crv-ctv)]
 
@@ -100,7 +100,7 @@ def variar(aeronave, sigma):
     ctv = geometria_ev[1][1]
     bv  = geometria_ev[1][0]
 
-    pos_cp = aeronave.posicoes['cp'][0]/cr
+    pos_cp = aeronave.posicoes['cp'][0]
     
     br = round(trunc_gauss(br, sigma, b_min_w/2, b_max_w/2 - 0.1), 2)
     bt = round(trunc_gauss(bt, sigma, 0.1, b_max_w/2 - bt), 2)
@@ -116,10 +116,10 @@ def variar(aeronave, sigma):
     lambda_v = trunc_gauss(lambda_v, sigma, lambda_min_v, lambda_max_v)
     crv = round(trunc_gauss(crv, sigma, ch, c_max_v), 2)
     ctv = round(lambda_v*crv, 2)
-    bv = round(trunc_gauss(bv, sigma, b_min_h, bh/2), 2)
+    bv = round(trunc_gauss(bv, sigma, b_min_h, bh), 2)
 
-    iw = round(trunc_gauss(aeronave.iw, sigma, 0, iw_max))
-    ih = round(trunc_gauss(aeronave.ih, sigma, ih_max, 0))
+    iw = round(trunc_gauss(aeronave.iw, sigma*50, 0, iw_max))
+    ih = round(trunc_gauss(aeronave.ih, sigma*50, ih_max, 0))
     
     ht = round(aeronave.posicoes['eh'][1], 2)
     ht = round(trunc_gauss(ht, sigma, 0, cr), 2)
@@ -128,9 +128,9 @@ def variar(aeronave, sigma):
     lt = round(trunc_gauss(lt, sigma, cr, soma_dims - ch - b*2), 2)
     lt = soma_dims - ch - b*2
 
-    mtow = trunc_gauss(aeronave.mtow, sigma, mtow_min, mtow_max)
+    mtow = trunc_gauss(aeronave.mtow, sigma, 15, mtow_max)
 
-    pos_cp = round(trunc_gauss(pos_cp, sigma, pos_cp_min, pos_cp_max)*cr, 2)
+    pos_cp = round(trunc_gauss(pos_cp, sigma, pos_cp_min*cr, pos_cp_max*cr), 2)
 
     geometria_asa = [(0, cr, 0), (br, cr, 0), (b, ct, o1)]
     geometria_eh = [(0, ch, 0), (bh, ch, 0)]

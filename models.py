@@ -322,21 +322,22 @@ class Monoplano:
         res += func_erro_neg(0, self.CM0, 1000)
         res += func_erro_neg(0, self.atrim, 1000)
 
-        res += 10*func_erro(self.CMa * 180/pi, -0.1, -0.8)
-        res += 2*func_erro(self.res0['CMq'] * 180/pi, -5, -40)
-        res += 0.1*func_erro(self.res0['Cnb'] * 180/pi, 0.05, 0.4)
-        res += 2*func_erro(self.res0['Cnr'] * 180/pi, -0.1, -1)
-        res += 300*func_erro(self.ME, 0.05, 0.15)
+        res += 20*func_erro(self.CMa * 180/pi, -0.1, -0.8)
+        res += 20*func_erro(self.res0['CMq'] * 180/pi, -5, -40)
+        res += 20*func_erro(self.res0['Cnb'] * 180/pi, 0.05, 0.4)
+        res += 20*func_erro(self.res0['Cnr'] * 180/pi, -0.1, -1)
+        res += 800*func_erro(self.ME*100, 5, 15)
 
+        res += 500*func_erro(self.atrim, 3, 9)
         res += 3*func_erro(self.VH, 0.3, 0.5)
         res += 3*func_erro(self.VV, 0.02, 0.05)
         res += 2*func_erro(self.CL_CD, 10, 50)
         res += 5*func_erro(self.x_pouso, 80, 120)
-        res += 100*func_erro(self.x_decolagem, 48.5, 49.5)
+        res += 100*func_erro(self.x_decolagem, 49.5, 50)
         res += 20*func_erro(self.CLtrim, CLcruzeiro - 0.1, CLcruzeiro + 0.1)
         res += 5*func_erro(self.ARw, 4, 8)
         res += 50*func_erro(self.ARh, 3, 5)
-        res += 1000*(self.carga_paga)**2
+        res += 1200*(self.carga_paga)**2
         self.nota = res
 
 def func_erro(valor, bot, top):

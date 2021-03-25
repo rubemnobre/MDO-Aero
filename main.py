@@ -6,6 +6,7 @@ import os
 import random
 import pickle
 import sys
+import shutil
 
 optimizer.perfis_asa[0] = sys.argv[1]
 print(optimizer.perfis_asa[0])
@@ -32,9 +33,10 @@ for j in range(n):
     print("geração %d: %.3f" % (j+1, melhor.nota))
     print("xcp = %.3f CLmax = %.4f atrim = %.3f Sw = %.3f ME = %.2f%% CP = %.2f pouso = %.2f decolagem = %.2f cma = %.2f arw = %.3f arh = %.3f" % (melhor.posicoes['cp'][0], melhor.CLmax, melhor.atrim, melhor.Sw, melhor.ME*100, melhor.carga_paga, melhor.x_pouso, melhor.x_decolagem, melhor.CMa *180/3.1416, melhor.ARw, melhor.ARh))
     notas.append(melhor.nota)
-    arq_melhor = open('./avl/configs/%s/geracao-%d/melhor.pyobj' % (code, j + 1), 'wb')
+    arq_melhor = open('./avl/configs/%s/geracao-%d-melhor.pyobj' % (code, j + 1), 'wb')
     pickle.dump(melhor, arq_melhor)
     arq_melhor.close()
+    shutil.rmtree('./avl/configs/%s/geracao-%d/' % (code, j + 1))
     if abs(melhor.nota - sum(notas)/10) < 0.5 and len(notas) == 10:
         break
     if len(notas) == 10:

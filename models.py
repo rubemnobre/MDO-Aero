@@ -6,7 +6,6 @@ import math
 n = 1
 rho = 1.16
 g = 9.81
-CLmax = 2.15
 astall = 13
 mu = 0.09
 v_cruzeiro = 16
@@ -63,20 +62,20 @@ class Monoplano:
         self.ME = (self.Xnp - self.xcg)/self.cw
         
         self.CLmax = self.resgnd['CL'] + (astall - self.iw)*self.resgnd['CLa']
-        self.vestol = math.sqrt(2*self.mtow*g/(rho*self.Sw*CLmax))
+        self.vestol = math.sqrt(2*self.mtow*g/(rho*self.Sw*self.CLmax))
 
         vd = 1.2*self.vestol
         L = 0.5*rho*self.Sw*self.resgnd['CL']*(0.7*vd)**2
         D = 0.5*rho*self.Sw*self.polar_arrasto(self.resgnd['CL'], self.phi)* (0.7*vd)**2
         T = tracao(0.7*vd)
         W = self.mtow*g
-        self.x_decolagem = 1.44*(W**2)/(g*rho*self.Sw*CLmax*(T - D - mu*(W - L)))
+        self.x_decolagem = 1.44*(W**2)/(g*rho*self.Sw*self.CLmax*(T - D - mu*(W - L)))
         #self.x_decolagem = self.decolagem()
 
         vp = 1.3*self.vestol
         L = 0.5*rho*self.Sw*self.resgnd['CL']*(0.7*vp)**2
         D = 0.5*rho*self.Sw*self.polar_arrasto(self.resgnd['CL'], self.phi)* (0.7*vp)**2
-        self.x_pouso = 1.69*(W**2)/(g*rho*self.Sw*CLmax*(D + mu*(W - L)))
+        self.x_pouso = 1.69*(W**2)/(g*rho*self.Sw*self.CLmax*(D + mu*(W - L)))
         #self.x_pouso = self.pouso()
 
         self.avaliar()
@@ -317,7 +316,7 @@ class Monoplano:
         self.dist_fuga = math.sqrt((self.posicoes['eh'][1])**2 + (self.geometria_asa[0][1] - self.posicoes['eh'][0])**2)
 
         res += func_erro_neg(self.cw, self.dist_fuga, 10000)
-        res += func_erro_neg(self.CLtrim, CLmax, 1000)
+        res += func_erro_neg(self.CLtrim, self.CLmax, 1000)
         res += func_erro_neg(self.CMa, 0, 100000)
         res += func_erro_neg(0, self.CM0, 1000)
         res += func_erro_neg(0, self.atrim, 1000)

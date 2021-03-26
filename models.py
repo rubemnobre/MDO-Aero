@@ -321,6 +321,7 @@ class Monoplano:
         res += func_erro_neg(0, self.CM0, 1000)
         res += func_erro_neg(0, self.atrim, 1000)
         res += func_erro_neg(0.05, self.ME, 100000)
+        res += func_erro_neg(self.ARh, 5.5, 1000)
 
         res += 20*func_erro(self.CMa * 180/pi, -0.1, -0.8)
         res += 20*func_erro(self.res0['CMq'] * 180/pi, -5, -40)

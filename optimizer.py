@@ -37,10 +37,10 @@ n_sect = 3
 dist_nariz = 0.295
 soma_dims = 3.2 - dist_nariz
 
-#perfis_asa = ['FX 74-Cl5-140 MOD (smoothed)', 'S1223 RTL', 'CH10 (smoothed)', 'DAE-21 AIRFOIL', 'WORTMANN FX 63-137 AIRFOIL', 'e423']
-#perfis_eh = ['e168', 'e169', 'e479', 'n0012', 'naca0015']
-perfis_asa = ['WORTMANN FX 63-137 AIRFOIL']
-perfis_eh = ['e168']
+perfis_asa = ['FX 74-Cl5-140 MOD (smoothed)', 'S1223 RTL', 'CH10 (smoothed)', 'DAE-21 AIRFOIL', 'WORTMANN FX 63-137 AIRFOIL', 'e423']
+perfis_eh = ['e168', 'e169', 'e479', 'n0012', 'naca0015']
+#perfis_asa = ['WORTMANN FX 63-137 AIRFOIL']
+#perfis_eh = ['e168']
 perfis_ev = ['e169']
 
 def gerar_inicial(total):

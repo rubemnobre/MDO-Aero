@@ -315,7 +315,7 @@ class Monoplano:
         
         self.dist_fuga = math.sqrt((self.posicoes['eh'][1])**2 + (self.geometria_asa[0][1] - self.posicoes['eh'][0])**2)
 
-        res += func_erro_neg(self.cw, self.dist_fuga, 10000)
+        #res += func_erro_neg(self.cw, self.dist_fuga, 10000)
         res += func_erro_neg(self.CLtrim, self.CLmax, 1000)
         res += func_erro_neg(self.CMa, 0, 100000)
         res += func_erro_neg(0, self.CM0, 1000)
